@@ -2,7 +2,7 @@
 Demo of tennis racket theorem.
 
 ## Overview
-Ground up `C++` program that simulates free rigid body motion, using quaternions to apply rotations. The intertia matrix is recalculated in lab frame and Cholesky factorized each time step. The demo script `qrot-demo.sh` compiles the code, runs three simulations spinning a set of particles around three different (perturbed) axes but with same angular velocity, and then produces the plots stored in the `readme-figures` folder.
+Ground-up library-free standard `C++` program that simulates free rigid body motion, using quaternions to apply rotations. The inertia matrix is recalculated in lab frame and Cholesky factorized each time step. The demo script `qrot-demo.sh` compiles the code, runs three simulations spinning a set of particles around three different (perturbed) axes but with same angular velocity, and then produces the plots stored in the `readme-figures` folder.
 
 ## Dzhanibekov effect
 The stability of the different spins is illustrated by the following figure.
@@ -20,4 +20,4 @@ The angular velocity vector has an interesting evolution for the unstable simula
 ![energy conservation](/readme-figures/qrot-plot-omega-axis2.png)
 
 ## Things to improve
-Among other things, the integrator should be replaced with a discrete variational technique, or similar.
+Among other things, the integrator should be replaced with a discrete variational technique, or similar. The text file import is not yet functional (but output is).
