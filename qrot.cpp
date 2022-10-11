@@ -32,7 +32,6 @@
 // tensor trace and determinant, angular velocity, and an orientation indicator.
 //
 
-// TODO: implement the CSV read to initialize the simulator generally
 // TODO: should have a P.csvdigits or similar for file write options
 // TODO: also check equivalence of CM and individual v methods
 // TODO: mechanical variational integrator ?
@@ -49,6 +48,7 @@
 
 #include "quavec3.hpp"
 #include "argsmap.hpp"
+#include "csvreader.hpp"
 
 struct sim_state {
   vec3 rcm;
@@ -302,11 +302,15 @@ struct sim_state {
   }
 
   bool read_csv(const std::string& filename) {
+    csvreader f(filename);
+    if (f.ncol() != 4)
+      return false;
     std::vector<vec3> csv_xyz;
     std::vector<double> csv_mass;
-    //
-    // TODO: read data into local vectors and then call the "initialize()" member function
-    //
+    for (size_t r = 0; r < f.nrow(); r++) {
+      csv_mass.push_back(f.get_element(r, 0));
+      csv_xyz.push_back({f.get_element(r, 1), f.get_element(r, 2), f.get_element(r, 3)});
+    }
     return (initialize(csv_xyz, csv_mass) == static_cast<int>(csv_mass.size()));
   }
 
@@ -450,9 +454,10 @@ int main(int argc, const char **argv)
       std::cout << "infile is #none# - nothing to do" << std::endl;
       return 1; 
     }
-    /* ... */
-    /* TODO: load particle data from CSV text file P.infile, or fail */
-    /* ... */
+    if (!S.read_csv(P.infile)) {
+      std::cout << "failed to load CSV file (" << P.infile << ")" << std::endl;
+      return 1;
+    }
   }
 
   if (S.r.size() == 0) {
