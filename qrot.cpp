@@ -32,8 +32,7 @@
 // tensor trace and determinant, angular velocity, and an orientation indicator.
 //
 
-// TODO: should have a P.csvdigits or similar for file write options
-// TODO: also check equivalence of CM and individual v methods
+// TODO: check equivalence of CM and individual v methods, activated via "verbose"
 // TODO: mechanical variational integrator ?
 
 #include <vector>
@@ -289,7 +288,7 @@ struct sim_state {
   }
 
   bool write_csv(const std::string& filename, 
-                 int digits = 16) const 
+                 int digits) const 
   {
     std::ofstream thefile(filename);
     if (!thefile.is_open())
@@ -328,9 +327,10 @@ struct sim_params
   int verbosity;
   int tracestep;
   int verbosestep;
+  int csvdigits;
 
   bool check_sanity() const {
-    return (dt > 0.0 && steps >= 0 && tracestep > 0 && verbosestep > 0);
+    return (dt > 0.0 && steps >= 0 && tracestep > 0 && verbosestep > 0 && csvdigits > 0);
   }
 
   bool setup_from_argsmap(const argsmap& args) {
@@ -379,6 +379,10 @@ struct sim_params
       return false;
     verbosestep = static_cast<int>(parsed_long);
 
+    if (!args.value_as_scalar_long("--csv-digits", parsed_long))
+      return false;
+    csvdigits = static_cast<int>(parsed_long);
+
     return check_sanity();
   }
 
@@ -392,7 +396,8 @@ struct sim_params
                 {"--omega",        "0.0,0.0,1.0"},
                 {"--vcm",          "0.0,0.0,0.0"},
                 {"--trace-step",   "10"},
-                {"--verbose-step", "100"}};
+                {"--verbose-step", "100"},
+                {"--csv-digits",   "16"}};
   }
 
 };
@@ -479,7 +484,7 @@ int main(int argc, const char **argv)
       return 1;
     }
     logfile << "step, time, K, Lx, Ly, Lz, omegax, omegay, omegaz, trI, logdetI, costheta" << std::endl;
-    logfile << std::setprecision(16);
+    logfile << std::setprecision(P.csvdigits);
   }
 
   // Set initial condition velocity states
@@ -539,7 +544,7 @@ int main(int argc, const char **argv)
   }
 
   if (use_out_file) {
-    if (!S.write_csv(P.outfile)) {
+    if (!S.write_csv(P.outfile, P.csvdigits)) {
       std::cout << "failed to write CSV file (" << P.outfile << ")" << std::endl;
     }
   }
