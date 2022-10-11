@@ -20,4 +20,5 @@ The angular velocity vector has an interesting evolution for the unstable simula
 ![energy conservation](/readme-figures/qrot-plot-omega-axis2.png)
 
 ## Things to improve
-Among other things, the integrator should be replaced with a discrete variational technique, or similar. The text file import is not yet functional (but output is).
+Among other things, the integrator should be replaced with a discrete variational technique, or similar. The text file import is implemented but not yet tested.
+
