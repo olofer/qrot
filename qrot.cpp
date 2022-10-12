@@ -595,12 +595,21 @@ int main(int argc, const char **argv)
   }
 
   if (use_x3d_file) {
-    // TODO: report how many frames are stored in X3D (if verbose)
+    if (P.verbosity > 0) {
+      std::cout << "saving X3D object with " << X3D.frames() << " snapshots to file (" << P.x3dfile << ")" << std::endl;
+    }
+    std::vector<double> radii;
+    for (size_t i = 0; i < X3D.points(); i++) {
+      const double refmass = 1.0;
+      const double refradius = 0.150;
+      radii.push_back(refradius * std::pow(S.m[i] / refmass, 1.0 / 3.0));
+    }
     bool write_ok = false;
+    X3D.set_digits(P.x3ddigits);
     if (use_x3d_template) {
-      write_ok = X3D.write_with_template(P.x3dtemplate, P.x3dfile, S.t);
+      write_ok = X3D.write_with_template(P.x3dtemplate, P.x3dfile, radii, S.t);
     } else {
-      write_ok = X3D.write_without_template(P.x3dfile, S.t);
+      write_ok = X3D.write_without_template(P.x3dfile, radii, S.t);
     }
     if (!write_ok) {
       std::cout << "failed to write X3D data to file (" << P.x3dfile << ")" << std::endl;

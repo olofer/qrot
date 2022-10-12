@@ -3,7 +3,7 @@
 class x3dframes
 {
 public:
-  x3dframes(int npts) {
+  x3dframes(int npts) : digits_(6) {
     for (int i = 0; i < npts; i++)
       pos_.emplace_back();
   }
@@ -45,6 +45,13 @@ public:
     return pos_.size();
   }
 
+  void set_digits(int d) {
+    if (d > 0)
+      digits_ = d;
+  }
+
+  // TODO: similarly have set_title(), set_subtitle(), set_caption()
+
   void write_sphere(std::ostream& os, 
                     const std::string& name, 
                     double radius) const 
@@ -78,6 +85,7 @@ public:
   {
     // <PositionInterpolator DEF="move1" key="0 0.5 1" keyValue="0 0 0  0 3 0  0 0 0"></PositionInterpolator>
     const double keymax = (frames() == 0 ? 1.0 : key_[frames() - 1]);
+    os << std::setprecision(digits_);
     os << "<PositionInterpolator DEF=\"" << name << "\" key=\"";
     for (size_t r = 0; r < frames(); r++)
       os << " " << key_[r] / keymax;
@@ -99,12 +107,14 @@ public:
   }
 
   void write(std::ostream& os, 
+             const std::vector<double>& radii,
              double cycleInterval) const 
   {
     const std::string spherenamebase = "point";
-    const double radius = 0.150;
+    const double default_radius = 0.150;
     for (size_t i = 0; i < points(); i++) {
-      write_sphere(os, spherenamebase + std::to_string(i), radius);
+      const double radi = (radii.size() == points() ? radii[i] : default_radius);
+      write_sphere(os, spherenamebase + std::to_string(i), radi);
       os << std::endl;
     }
 
@@ -121,13 +131,14 @@ public:
     }
   }
 
-  bool write_without_template(const std::string& x3dfile, 
+  bool write_without_template(const std::string& x3dfile,
+                              const std::vector<double>& radii, 
                               double cycleInterval) const 
   {
     std::ofstream outfile(x3dfile);
     if (!outfile.is_open())
       return false;
-    write(outfile, cycleInterval);
+    write(outfile, radii, cycleInterval);
     outfile.close();
     return true;
   }
@@ -135,6 +146,7 @@ public:
   // TODO: add option to replace title + subtitle + caption in the template
   bool write_with_template(const std::string& templateFile, 
                            const std::string& htmlFile,
+                           const std::vector<double>& radii,
                            double cycleInterval) const 
   {
     std::ifstream infile(templateFile);
@@ -159,7 +171,7 @@ public:
       }
       if (state == 1 && therow.find("<!-- PASTE END -->") != std::string::npos) {
         //outfile << "<!-- PASTE BEGIN -->" << std::endl;
-        write(outfile, cycleInterval);
+        write(outfile, radii, cycleInterval);
         //outfile << "<!-- PASTE END -->" << std::endl;
         state = 0;
         continue;
@@ -175,6 +187,7 @@ public:
   }
 
 private:
+  int digits_;
   std::vector<double> key_;
   std::vector<std::vector<vec3>> pos_;
 };
