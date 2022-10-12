@@ -32,8 +32,12 @@
 // tensor trace and determinant, angular velocity, and an orientation indicator.
 //
 
+// TODO: improve X3DOM animation output file to have meaningful title/subtitle and store calling command text
 // TODO: check equivalence of CM and individual v methods, activated via "verbose"
 // TODO: mechanical variational integrator ?
+
+// EXAMPLE: 
+// ./qrot --dt=.1e-5 --steps=25e6 --omega=0,10,0.01 --verbosity=1 --x3d-step=10000 --x3d-file=qrot-anim.html --x3d-template=example.html 
 
 #include <vector>
 #include <iostream>
@@ -48,6 +52,7 @@
 #include "quavec3.hpp"
 #include "argsmap.hpp"
 #include "csvreader.hpp"
+#include "x3dframes.hpp"
 
 struct sim_state {
   vec3 rcm;
@@ -328,9 +333,19 @@ struct sim_params
   int tracestep;
   int verbosestep;
   int csvdigits;
+  std::string x3dfile;
+  std::string x3dtemplate;
+  int x3dstep;
+  int x3ddigits;
 
   bool check_sanity() const {
-    return (dt > 0.0 && steps >= 0 && tracestep > 0 && verbosestep > 0 && csvdigits > 0);
+    return (dt > 0.0 && 
+            steps >= 0 && 
+            tracestep > 0 && 
+            verbosestep > 0 && 
+            csvdigits > 0 &&
+            x3ddigits > 0 &&
+            x3dstep > 0);
   }
 
   bool setup_from_argsmap(const argsmap& args) {
@@ -383,6 +398,20 @@ struct sim_params
       return false;
     csvdigits = static_cast<int>(parsed_long);
 
+    if (!args.value_as_string("--x3d-file", x3dfile))
+      return false;
+
+    if (!args.value_as_string("--x3d-template", x3dtemplate))
+      return false;
+
+    if (!args.value_as_scalar_long("--x3d-step", parsed_long))
+      return false;
+    x3dstep = static_cast<int>(parsed_long);
+
+    if (!args.value_as_scalar_long("--x3d-digits", parsed_long))
+      return false;
+    x3ddigits = static_cast<int>(parsed_long);
+
     return check_sanity();
   }
 
@@ -397,7 +426,11 @@ struct sim_params
                 {"--vcm",          "0.0,0.0,0.0"},
                 {"--trace-step",   "10"},
                 {"--verbose-step", "100"},
-                {"--csv-digits",   "16"}};
+                {"--csv-digits",   "16"},
+                {"--x3d-file",     "#none#"},
+                {"--x3d-template", "#none#"},
+                {"--x3d-digits",   "8"},
+                {"--x3d-step",     "1000"}};
   }
 
 };
@@ -433,10 +466,9 @@ int main(int argc, const char **argv)
     return 1;
   }
 
-  std::cout << "*** key,value ***" << std::endl;
-  arg.print();
-
   if (!P.setup_from_argsmap(arg)) {
+    std::cout << "*** key,value ***" << std::endl;
+    arg.print();
     std::cout << "failed to setup parameter struct" << std::endl;
     return 1;
   }
@@ -475,6 +507,10 @@ int main(int argc, const char **argv)
 
   const bool use_trace_file = (P.tracefile != "#none#");
   const bool use_out_file = (P.outfile != "#none#");
+  const bool use_x3d_file = (P.x3dfile != "#none#");
+  const bool use_x3d_template = (P.x3dtemplate != "#none#");
+
+  x3dframes X3D(S.r.size());
 
   std::ofstream logfile;
   if (use_trace_file) {
@@ -504,6 +540,7 @@ int main(int argc, const char **argv)
 
   int64_t trace_counter = 1;
   int64_t verbose_counter = 1;
+  int64_t x3d_counter = 1;
 
   for (int k = 0; k < P.steps; k++) {
     S.cm_frame_prepare();
@@ -536,6 +573,14 @@ int main(int argc, const char **argv)
       trace_counter = P.tracestep;
     }
 
+    if (use_x3d_file && --x3d_counter == 0) {
+      if (!X3D.add(S.t, S.r)) {
+        std::cout << "x3d add error; breaking simulation" << std::endl;
+        break;
+      }
+      x3d_counter = P.x3dstep;
+    }
+
     S.qevolve(P.dt);
   }
 
@@ -546,6 +591,19 @@ int main(int argc, const char **argv)
   if (use_out_file) {
     if (!S.write_csv(P.outfile, P.csvdigits)) {
       std::cout << "failed to write CSV file (" << P.outfile << ")" << std::endl;
+    }
+  }
+
+  if (use_x3d_file) {
+    // TODO: report how many frames are stored in X3D (if verbose)
+    bool write_ok = false;
+    if (use_x3d_template) {
+      write_ok = X3D.write_with_template(P.x3dtemplate, P.x3dfile, S.t);
+    } else {
+      write_ok = X3D.write_without_template(P.x3dfile, S.t);
+    }
+    if (!write_ok) {
+      std::cout << "failed to write X3D data to file (" << P.x3dfile << ")" << std::endl;
     }
   }
 
