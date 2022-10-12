@@ -1,0 +1,88 @@
+<!-- basic template for X3DOM particle animations -->
+
+<html>
+<head>
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1"/>
+  <title>[PAGETITLE]</title>
+  <script type='text/javascript' src='https://www.x3dom.org/download/x3dom.js'> </script>
+  <link rel='stylesheet' type='text/css' href='https://www.x3dom.org/download/x3dom.css'/>
+</head>
+<body>
+<h1>[TITLE]</h1>
+<p>[SUBTITLE]</p>
+
+<x3d width='700px' height='500px'>
+  <scene>
+
+  <viewpoint position='0 0 10'></viewpoint>
+  <background skyColor='0.5 0.5 0.5'></background>
+
+  <transform translation='1 0 0' scale='0.5 0.5 0.5'>
+    <shape><text string='x'></text></shape>
+  </transform>
+
+  <transform translation='0 1 0' scale='0.5 0.5 0.5'>
+    <shape><text string='y'></text></shape>
+  </transform>
+
+  <transform translation='0 0 1' scale='0.5 0.5 0.5'>
+    <shape><text string='z'></text></shape>
+  </transform>
+
+  <shape>
+    <lineset vertexcount="2" solid="true">
+      <coordinate point="-1 0 0, 1 0 0"></coordinate>
+    </lineset>
+  </shape>
+
+  <shape>
+    <lineset vertexcount="2" solid="true">
+      <coordinate point="0 -1 0, 0 1 0"></coordinate>
+    </lineset>
+  </shape>
+
+  <shape>
+    <lineset vertexcount="2" solid="true">
+      <coordinate point="0 0 -1, 0 0 1"></coordinate>
+    </lineset>
+  </shape>
+
+  <!-- PASTE BEGIN -->
+
+  <transform DEF="ball1">
+  <shape>
+  <appearance>
+    <material diffuseColor='0 1 0'></material>
+  </appearance>
+  <sphere radius="0.20"></sphere>
+  </shape>
+  </transform>
+
+  <transform DEF="ball2">
+  <shape>
+  <appearance>
+    <material diffuseColor='0 0 1'></material>
+  </appearance>
+  <sphere radius="0.10"></sphere>
+  </shape>
+  </transform>
+
+  <timeSensor DEF="time" cycleInterval="3" loop="true"></timeSensor>
+
+  <PositionInterpolator DEF="move1" key="0 0.5 1" keyValue="0 0 0  0 3 0  0 0 0"></PositionInterpolator>
+
+  <Route fromNode="time" fromField ="fraction_changed" toNode="move1" toField="set_fraction"></Route>
+  <Route fromNode="move1" fromField ="value_changed" toNode="ball1" toField="translation"></Route>
+
+  <PositionInterpolator DEF="move2" key="0 0.5 1" keyValue="3 0 0  0 0 0  -3 0 0"></PositionInterpolator>
+
+  <Route fromNode="time" fromField ="fraction_changed" toNode="move2" toField="set_fraction"></Route>
+  <Route fromNode="move2" fromField ="value_changed" toNode="ball2" toField="translation"></Route>
+
+  <!-- PASTE END -->
+
+  </scene>
+</x3d>
+<p>[CAPTION]</p>
+</body>
+</html>
