@@ -19,6 +19,9 @@ The angular velocity vector has an interesting evolution for the unstable simula
 
 ![energy conservation](/readme-figures/qrot-plot-omega-axis2.png)
 
+## Browser animation export
+The `--x3d-file` option (with related configurations such as `--x3d-template`) allows saving snapshots to a file that can be animated in a web browser. Here is an [example](http://htmlpreview.github.io/?https://github.com/olofer/qrot/blob/main/x3dom-generated/qrot-anim.html).
+
 ## Things to improve
 Among other things, the integrator should be replaced with a discrete variational technique, or similar. The text file import is implemented but not yet tested.
 
