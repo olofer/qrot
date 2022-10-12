@@ -3,7 +3,13 @@
 class x3dframes
 {
 public:
-  x3dframes(int npts) : digits_(6) {
+  x3dframes(int npts) : 
+    digits_(6),
+    tabtitle_("(notabtitle)"), 
+    title_("(notitle)"), 
+    subtitle_("(nosubtitle)"), 
+    caption_("(nocaption)") 
+  {
     for (int i = 0; i < npts; i++)
       pos_.emplace_back();
   }
@@ -50,7 +56,18 @@ public:
       digits_ = d;
   }
 
-  // TODO: similarly have set_title(), set_subtitle(), set_caption()
+  void set_titles(const std::string& tabtitle,
+                  const std::string& title,
+                  const std::string& subtitle)
+  {
+    tabtitle_ = tabtitle;
+    title_ = title;
+    subtitle_ = subtitle;
+  }
+
+  void set_caption(const std::string& caption) {
+    caption_ = caption;
+  }
 
   void write_sphere(std::ostream& os, 
                     const std::string& name, 
@@ -143,7 +160,6 @@ public:
     return true;
   }
 
-  // TODO: add option to replace title + subtitle + caption in the template
   bool write_with_template(const std::string& templateFile, 
                            const std::string& htmlFile,
                            const std::vector<double>& radii,
@@ -165,6 +181,24 @@ public:
     int state = 0;
 
     while (std::getline(infile, therow)) {
+      if (state == 0) {
+        if (replace_if_any_(therow, "[PAGETITLE]", tabtitle_)) {
+          outfile << therow << std::endl;
+          continue;    
+        }
+        if (replace_if_any_(therow, "[TITLE]", title_)) {
+          outfile << therow << std::endl;
+          continue;    
+        }
+        if (replace_if_any_(therow, "[SUBTITLE]", subtitle_)) {
+          outfile << therow << std::endl;
+          continue;    
+        }
+        if (replace_if_any_(therow, "[CAPTION]", caption_)) {
+          outfile << therow << std::endl;
+          continue;    
+        }
+      }
       if (state == 0 && therow.find("<!-- PASTE BEGIN -->") != std::string::npos) {
         state = 1;
         continue;
@@ -187,7 +221,23 @@ public:
   }
 
 private:
+
+  bool replace_if_any_(std::string& s, 
+                       const std::string& what, 
+                       const std::string& with) const 
+  {
+    size_t pos = s.find(what);
+    if (pos == std::string::npos)
+      return false;
+    s.replace(pos, what.size(), with);
+    return true;
+  }
+
   int digits_;
   std::vector<double> key_;
   std::vector<std::vector<vec3>> pos_;
+  std::string tabtitle_;
+  std::string title_;
+  std::string subtitle_;
+  std::string caption_;
 };
