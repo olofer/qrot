@@ -336,6 +336,7 @@ struct sim_params
   std::string x3dtemplate;
   int x3dstep;
   int x3ddigits;
+  double x3dcycle;
 
   bool check_sanity() const {
     return (dt > 0.0 && 
@@ -344,7 +345,8 @@ struct sim_params
             verbosestep > 0 && 
             csvdigits > 0 &&
             x3ddigits > 0 &&
-            x3dstep > 0);
+            x3dstep > 0 &&
+            x3dcycle >= 0.0);
   }
 
   bool setup_from_argsmap(const argsmap& args) {
@@ -411,6 +413,9 @@ struct sim_params
       return false;
     x3ddigits = static_cast<int>(parsed_long);
 
+    if (!args.value_as_scalar_double("--x3d-cycle", x3dcycle))
+      return false;
+
     return check_sanity();
   }
 
@@ -429,7 +434,8 @@ struct sim_params
                 {"--x3d-file",     "#none#"},
                 {"--x3d-template", "#none#"},
                 {"--x3d-digits",   "8"},
-                {"--x3d-step",     "1000"}};
+                {"--x3d-step",     "1000"},
+                {"--x3d-cycle",    "0.0"}};
   }
 
 };
@@ -615,10 +621,11 @@ int main(int argc, const char **argv)
                                + std::to_string(X3D.frames()) 
                                + " snapshots)";
     X3D.set_titles("qrot-x3dom", "qrot-x3dom", subttl);
+    const double cycleInterval = (P.x3dcycle == 0.0 ? S.t : P.x3dcycle);
     if (use_x3d_template) {
-      write_ok = X3D.write_with_template(P.x3dtemplate, P.x3dfile, radii, S.t);
+      write_ok = X3D.write_with_template(P.x3dtemplate, P.x3dfile, radii, cycleInterval);
     } else {
-      write_ok = X3D.write_without_template(P.x3dfile, radii, S.t);
+      write_ok = X3D.write_without_template(P.x3dfile, radii, cycleInterval);
     }
     if (!write_ok) {
       std::cout << "failed to write X3D data to file (" << P.x3dfile << ")" << std::endl;
