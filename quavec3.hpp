@@ -219,6 +219,16 @@ struct ten3 {
     }
   }
 
+  // Assume the original calc is done in CM frame; and sum(m[i]) = M
+  void translate(const vec3& R, double M) {
+    xx += M * (R.y * R.y + R.z * R.z);
+    yy += M * (R.x * R.x + R.z * R.z);
+    zz += M * (R.x * R.x + R.y * R.y);
+    xy -= M * (R.x * R.y);
+    xz -= M * (R.x * R.z);
+    yz -= M * (R.y * R.z);
+  }
+
   vec3 operator*(const vec3& v) const {
     const double a = xx * v.x + xy * v.y + xz * v.z;
     const double b = xy * v.x + yy * v.y + yz * v.z;
