@@ -8,7 +8,7 @@
 // 
 // USAGE: ./qrot ...options...
 //
-// List all available options by calling ./qrot without any option.
+// List all available options by calling ./qrot without any option (the below list is incomplete).
 //
 // --in-file=FN1 
 // --out-file=FN2
@@ -32,8 +32,7 @@
 // tensor trace and determinant, angular velocity, and an orientation indicator.
 //
 
-// TODO: check equivalence of CM and individual v methods, activated via "verbose"
-// TODO: mechanical variational integrator ?
+// TODO: mechanical variational integrator? basic predictor-corrector integrator? RK45?
 
 // EXAMPLE: 
 // ./qrot --dt=.1e-5 --steps=25e6 --omega=0,10,0.01 --verbosity=1 --x3d-step=10000 --x3d-file=qrot-anim.html --x3d-template=example.html 
@@ -107,7 +106,7 @@ struct sim_state {
 
     const vec3 zero_vector = {0.0, 0.0, 0.0};
     dr.resize(r.size(), zero_vector);
-    v.resize(v.size(), zero_vector);
+    v.resize(r.size(), zero_vector);
 
     zero_velocities();
     calc_cm_from_r();
@@ -524,7 +523,7 @@ int main(int argc, const char **argv)
       std::cout << "failed to open trace file (" << P.tracefile << ") for writing" << std::endl;
       return 1;
     }
-    logfile << "step, time, K, Lx, Ly, Lz, omegax, omegay, omegaz, trI, logdetI, costheta" << std::endl;
+    logfile << "step, time, K, Lx, Ly, Lz, omegax, omegay, omegaz, trI, logdetI, costheta, Kcheck" << std::endl;
     logfile << std::setprecision(P.csvdigits);
   }
 
@@ -573,7 +572,11 @@ int main(int argc, const char **argv)
       logfile << k << ", " << S.t << ", " << S.K;
       logfile << ", " << S.L.x << ", " << S.L.y << ", " << S.L.z; 
       logfile << ", " << S.omega.x << ", " << S.omega.y << ", " << S.omega.z; 
-      logfile << ", " << S.Icm.trace() << ", " << S.Icm.logdet() << ", " << cos_theta << std::endl;
+      logfile << ", " << S.Icm.trace() << ", " << S.Icm.logdet() << ", " << cos_theta;
+
+      S.calc_v();
+      const double Kcheck = S.calc_kinetic_energy_from_v();
+      logfile << ", " << Kcheck << std::endl;
 
       trace_counter = P.tracestep;
     }
